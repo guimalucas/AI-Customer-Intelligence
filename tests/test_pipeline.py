@@ -37,6 +37,13 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(chamadas, ["um", "dois", "dois"])
             self.assertEqual(len(pd.read_csv(saida)), 2)
 
+            # Mesmo ID com texto alterado precisa de uma nova classificação.
+            pd.DataFrame({"id": [1, 2], "feedback": ["um corrigido", "dois"]}).to_csv(
+                entrada, index=False
+            )
+            self.assertEqual(processar(entrada, saida, analisar), (2, 0))
+            self.assertEqual(chamadas[-1], "um corrigido")
+
     def test_missing_prediction_counts_as_error(self):
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)

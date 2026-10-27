@@ -25,7 +25,11 @@ def processar(entrada: Path, saida: Path, analisar=None) -> tuple[int, int]:
     else:
         atuais = {}
 
-    concluidos = {id_ for id_, r in atuais.items() if r.get("status") == "sucesso"}
+    textos_atuais = origem.set_index("id")["feedback"].to_dict()
+    concluidos = {
+        id_ for id_, r in atuais.items()
+        if r.get("status") == "sucesso" and r.get("feedback") == textos_atuais[id_]
+    }
     pendentes = origem.loc[~origem["id"].isin(concluidos)]
     if not pendentes.empty and analisar is None:
         # A chave só é exigida se houver alguma chamada à API.
