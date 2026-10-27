@@ -1,5 +1,15 @@
 # AI Customer Intelligence
 
+**Em 30 segundos:** pipeline Python que transforma feedbacks sintéticos de serviços financeiros em categoria, assunto, sentimento, urgência, resumo, possível causa e ação sugerida. Os dados estruturados são explorados em um notebook. Em 120 exemplos gerados para este projeto, 119 categorias e 118 assuntos coincidiram com os rótulos usados na geração. Esses números **não são estimativa de desempenho em clientes reais**.
+
+| Onde olhar | O que demonstra |
+|---|---|
+| [Pipeline](pipeline.py) e [schema](models.py) | Retomada por ID, resposta estruturada e validação de categoria × assunto |
+| [Avaliação](evaluation.py) | Comparação por ID, incluindo falhas e ausências no denominador |
+| [Notebook](01_customer_feedback_analysis.ipynb) | Distribuições e análise exploratória reproduzível |
+
+Para conhecer o funcionamento sem usar uma chave de API, execute a avaliação e abra o notebook: os resultados já estão em `data/`. O pipeline chama a API somente para IDs ainda não concluídos; uma nova execução com estes 120 resultados não gasta tokens.
+
 Projeto de Customer Intelligence que utiliza uma LLM para transformar feedbacks escritos por clientes em dados estruturados e mais fáceis de analisar.
 
 A ideia surgiu a partir de um problema simples: uma empresa pode receber centenas ou milhares de comentários de clientes, mas boa parte dessas informações chega em formato de texto. Ler e classificar tudo manualmente dificulta identificar quais problemas aparecem, quais precisam de mais atenção e como os clientes estão reagindo.
@@ -151,6 +161,8 @@ Os dados estão disponíveis na pasta `data/`.
 | `evaluation_results.csv` | Comparação entre os valores esperados e classificados |
 
 Como o dataset é sintético, ele não representa a distribuição real de reclamações de clientes de uma instituição financeira. Seu objetivo é permitir o desenvolvimento e teste do pipeline.
+
+Os rótulos de referência foram atribuídos durante a geração dos textos, e não por anotadores independentes. Em casos ambíguos, um desacordo com esse rótulo não prova que a classificação do modelo seja incorreta. Não há validação externa neste repositório.
 
 ---
 
@@ -398,6 +410,16 @@ python evaluation.py
 ```
 
 A análise exploratória pode ser visualizada diretamente pelo notebook disponível no repositório.
+
+Para executar o notebook, abra o Jupyter **na raiz do repositório** e rode as células em ordem. Ele lê `data/feedback_enriched.csv` e não precisa da API.
+
+Para testar os comportamentos de retomada e avaliação sem fazer chamadas externas:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+O arquivo `.env` só é necessário quando houver feedbacks pendentes. Novas chamadas à API podem gerar custos.
 
 ---
 
