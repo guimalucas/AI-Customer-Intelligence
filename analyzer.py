@@ -106,4 +106,6 @@ def analisar_feedback(feedback: str) -> AnaliseFeedback:
          text_format=AnaliseFeedback
     )
 
+    if response.output_parsed is None:
+        raise ValueError("A API não retornou uma análise estruturada.")
     return response.output_parsed
