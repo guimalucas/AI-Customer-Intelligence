@@ -7,6 +7,7 @@ import pandas as pd
 
 from pipeline import processar
 from evaluation import avaliar
+from review import preparar_amostra
 
 
 def enum(value):
@@ -55,6 +56,35 @@ class PipelineTests(unittest.TestCase):
             resultado = avaliar(refs, pred, out)
             self.assertEqual(resultado["processados"], 1)
             self.assertEqual(resultado["acuracia_categoria"], 0.5)
+            self.assertEqual(resultado["macro_f1_categoria"], 2 / 3)
+
+    def test_blind_review_requires_labels_and_unchanged_text(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            texts, metadata, template, predictions, output = (
+                base / name for name in ("texts.csv", "meta.csv", "review.csv", "pred.csv", "eval.csv")
+            )
+            pd.DataFrame({"id": [1, 2], "feedback": ["texto A", "texto B"]}).to_csv(texts, index=False)
+            pd.DataFrame({"id": [1, 2], "categoria_geracao": ["pix", "boleto"]}).to_csv(
+                metadata, index=False
+            )
+            review = preparar_amostra(texts, metadata, template, por_categoria=1)
+            self.assertFalse({"categoria_geracao", "categoria"} & set(review.columns))
+            pd.DataFrame({"id": [1, 2], "feedback": ["texto A", "texto B"],
+                          "categoria": ["pix", "boleto"], "status": ["sucesso"] * 2}).to_csv(
+                predictions, index=False
+            )
+            with self.assertRaisesRegex(ValueError, "preenchidas"):
+                avaliar(template, predictions, output, "revisada", ("categoria",))
+
+            review["categoria_revisada"] = ["pix", "boleto"]
+            review.to_csv(template, index=False)
+            self.assertEqual(1.0, avaliar(template, predictions, output, "revisada",
+                                          ("categoria",))["acuracia_categoria"])
+            review.loc[0, "feedback"] = "texto alterado"
+            review.to_csv(template, index=False)
+            with self.assertRaisesRegex(ValueError, "texto mudou"):
+                avaliar(template, predictions, output, "revisada", ("categoria",))
 
 
 if __name__ == "__main__":
